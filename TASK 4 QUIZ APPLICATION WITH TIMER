@@ -1,0 +1,138 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class QuizApplication {
+    private JFrame frame;
+    private JPanel questionPanel, resultPanel;
+    private JLabel questionLabel, timerLabel;
+    private JRadioButton[] options;
+    private ButtonGroup optionGroup;
+    private JButton submitButton, nextButton;
+    private Timer timer;
+
+    private String[][] questions = {
+            {"What is the capital of France?", "Paris", "London", "Berlin", "Madrid", "1"},
+            {"Which planet is known as the Red Planet?", "Earth", "Mars", "Jupiter", "Saturn", "2"},
+            {"Who wrote 'Romeo and Juliet'?", "Shakespeare", "Dickens", "Austen", "Hemingway", "1"},
+            {"What is the square root of 16?", "2", "3", "4", "5", "3"},
+            {"Which language is primarily used for Android development?", "Python", "Kotlin", "Java", "Swift", "3"}
+    };
+
+    private int currentQuestionIndex = 0;
+    private int score = 0;
+    private int timeLeft = 15; 
+
+    public QuizApplication() {
+        frame = new JFrame("Quiz Application");
+        frame.setSize(600, 400);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new BorderLayout());
+
+        questionPanel = new JPanel(new BorderLayout());
+        questionLabel = new JLabel("Question will appear here", JLabel.CENTER);
+        questionLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        questionPanel.add(questionLabel, BorderLayout.NORTH);
+        JPanel optionsPanel = new JPanel(new GridLayout(4, 1));
+        options = new JRadioButton[4];
+        optionGroup = new ButtonGroup();
+        for (int i = 0; i < options.length; i++) {
+            options[i] = new JRadioButton();
+            optionGroup.add(options[i]);
+            optionsPanel.add(options[i]);
+        }
+        questionPanel.add(optionsPanel, BorderLayout.CENTER);
+        JPanel controlPanel = new JPanel(new FlowLayout());
+        timerLabel = new JLabel("Time Left: 15s");
+        submitButton = new JButton("Submit");
+        nextButton = new JButton("Next");
+        nextButton.setEnabled(false);
+        controlPanel.add(timerLabel);
+        controlPanel.add(submitButton);
+        controlPanel.add(nextButton);
+        questionPanel.add(controlPanel, BorderLayout.SOUTH);
+        frame.add(questionPanel, BorderLayout.CENTER);
+
+        submitButton.addActionListener(e -> checkAnswer());
+        nextButton.addActionListener(e -> loadNextQuestion());
+        timer = new Timer(1000, e -> updateTimer());
+        loadQuestion();
+
+    
+        frame.setVisible(true);
+    }
+
+    private void loadQuestion() {
+        if (currentQuestionIndex < questions.length) {
+            String[] currentQuestion = questions[currentQuestionIndex];
+            questionLabel.setText((currentQuestionIndex + 1) + ". " + currentQuestion[0]);
+            for (int i = 0; i < options.length; i++) {
+                options[i].setText(currentQuestion[i + 1]);
+                options[i].setEnabled(true);
+            }
+            optionGroup.clearSelection();
+            timeLeft = 15;
+            timerLabel.setText("Time Left: 15s");
+            timer.start();
+            submitButton.setEnabled(true);
+            nextButton.setEnabled(false);
+        } else {
+            displayResults();
+        }
+    }
+    private void checkAnswer() {
+        timer.stop();
+        String correctAnswer = questions[currentQuestionIndex][5];
+        int selectedIndex = -1;
+        for (int i = 0; i < options.length; i++) {
+            if (options[i].isSelected()) {
+                selectedIndex = i + 1;
+                break;
+            }
+        }
+
+        if (selectedIndex == Integer.parseInt(correctAnswer)) {
+            score++;
+        }
+        for (JRadioButton option : options) {
+            option.setEnabled(false);
+        }
+        submitButton.setEnabled(false);
+        nextButton.setEnabled(true);
+    }
+    private void loadNextQuestion() {
+        currentQuestionIndex++;
+        loadQuestion();
+    }
+    private void updateTimer() {
+        timeLeft--;
+        timerLabel.setText("Time Left: " + timeLeft + "s");
+        if (timeLeft == 0) {
+            timer.stop();
+            checkAnswer();
+        }
+    }
+    private void displayResults() {
+        frame.remove(questionPanel);
+        resultPanel = new JPanel(new GridLayout(0, 1));
+        JLabel scoreLabel = new JLabel("Your Score: " + score + "/" + questions.length, JLabel.CENTER);
+        scoreLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        resultPanel.add(scoreLabel);
+
+        for (int i = 0; i < questions.length; i++) {
+            String question = questions[i][0];
+            String correctAnswer = questions[i][Integer.parseInt(questions[i][5])];
+            JLabel questionLabel = new JLabel((i + 1) + ". " + question + " - Correct Answer: " + correctAnswer);
+            resultPanel.add(questionLabel);
+        }
+
+        frame.add(resultPanel, BorderLayout.CENTER);
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(QuizApplication::new);
+    }
+}
